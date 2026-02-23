@@ -9,6 +9,7 @@ interface PtyInstance {
   process: pty.IPty
   onDataCallback: (data: string) => void
   initialCwd: string
+  lastKnownCwd: string
   createdAt: number
   restartCount: number
 }
@@ -70,8 +71,10 @@ export class PtyManager {
         this.instances.delete(id)
 
         if (wasQuickExit && instance && instance.restartCount < MAX_RESTART_ATTEMPTS) {
+          // Use last known cwd so restart preserves user's current directory
+          const restartCwd = instance.lastKnownCwd || instance.initialCwd
           setTimeout(() => {
-            this.create(id, instance.onDataCallback, instance.initialCwd, instance.restartCount + 1, onExit)
+            this.create(id, instance.onDataCallback, restartCwd, instance.restartCount + 1, onExit)
           }, RESTART_DELAY_MS)
         } else {
           onExit?.()
@@ -82,9 +85,13 @@ export class PtyManager {
         process: ptyProcess,
         onDataCallback: onData,
         initialCwd: workingDir,
+        lastKnownCwd: workingDir,
         createdAt: Date.now(),
         restartCount
       })
+
+      // Periodically track cwd so we can restore it on crash restart
+      this.trackCwd(id)
     } catch (error) {
       onData(`\r\n\x1b[31mError: Failed to spawn shell (${shell})\x1b[0m\r\n`)
       if (restartCount < MAX_RESTART_ATTEMPTS) {
@@ -141,10 +148,27 @@ export class PtyManager {
     proc.onExit(() => clearTimeout(forceKillTimer))
   }
 
-  async getCwd(id: string): Promise<string> {
-    const instance = this.instances.get(id)
-    if (!instance) return os.homedir()
+  /**
+   * Periodically update lastKnownCwd while PTY is alive,
+   * so crash restart can use the actual cwd instead of initial cwd.
+   */
+  private trackCwd(id: string): void {
+    const interval = setInterval(async () => {
+      const instance = this.instances.get(id)
+      if (!instance) {
+        clearInterval(interval)
+        return
+      }
+      try {
+        const cwd = await this.resolveCwd(instance)
+        if (cwd) instance.lastKnownCwd = cwd
+      } catch {
+        // ignore - process may have just exited
+      }
+    }, 5000)
+  }
 
+  private async resolveCwd(instance: PtyInstance): Promise<string | null> {
     const pid = instance.process.pid
     try {
       if (os.platform() === 'darwin') {
@@ -160,6 +184,14 @@ export class PtyManager {
     } catch {
       // fallback
     }
-    return instance.initialCwd
+    return null
+  }
+
+  async getCwd(id: string): Promise<string> {
+    const instance = this.instances.get(id)
+    if (!instance) return os.homedir()
+
+    const cwd = await this.resolveCwd(instance)
+    return cwd || instance.lastKnownCwd || instance.initialCwd
   }
 }
