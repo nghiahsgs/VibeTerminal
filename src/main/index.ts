@@ -39,7 +39,10 @@ function createWindow(): void {
 ipcMain.handle('terminal:create', (_, id: string, cwd?: string) => {
   ptyManager.create(id, (data) => {
     mainWindow?.webContents.send('terminal:data', { id, data })
-  }, cwd)
+  }, cwd, 0, () => {
+    // Notify renderer that PTY exited so it stops writing to dead process
+    mainWindow?.webContents.send('terminal:exit', { id })
+  })
 })
 
 ipcMain.on('terminal:write', (_, id: string, data: string) => {
@@ -69,6 +72,11 @@ ipcMain.handle('app:getTheme', () => {
 // --- App Lifecycle ---
 
 app.whenReady().then(createWindow)
+
+// Gracefully kill all PTYs before quitting to avoid SIGHUP warnings
+app.on('before-quit', () => {
+  ptyManager.killAll()
+})
 
 app.on('window-all-closed', () => {
   ptyManager.killAll()

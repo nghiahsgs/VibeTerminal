@@ -13,6 +13,11 @@ contextBridge.exposeInMainWorld('terminal', {
     const handler = (_: Electron.IpcRendererEvent, payload: { id: string; data: string }) => callback(payload)
     ipcRenderer.on('terminal:data', handler)
     return () => ipcRenderer.removeListener('terminal:data', handler)
+  },
+  onExit: (callback: (payload: { id: string }) => void) => {
+    const handler = (_: Electron.IpcRendererEvent, payload: { id: string }) => callback(payload)
+    ipcRenderer.on('terminal:exit', handler)
+    return () => ipcRenderer.removeListener('terminal:exit', handler)
   }
 })
 

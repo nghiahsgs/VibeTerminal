@@ -62,9 +62,15 @@ export function TerminalInstance({ id, isActive, cwd, onImagePaste }: Props) {
       if (dataId === id) terminal.write(data)
     })
 
-    // Terminal input -> PTY
+    // Terminal input -> PTY (guard against writing to dead PTY)
+    let ptyAlive = true
     const inputDisposable = terminal.onData((data) => {
-      window.terminal.write(id, data)
+      if (ptyAlive) window.terminal.write(id, data)
+    })
+
+    // Stop writing when PTY exits unexpectedly
+    const removeExitListener = window.terminal.onExit(({ id: exitId }) => {
+      if (exitId === id) ptyAlive = false
     })
 
     // Fit and resize

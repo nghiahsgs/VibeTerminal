@@ -5,6 +5,7 @@ export interface TerminalAPI {
   kill: (id: string) => Promise<void>
   getCwd: (id: string) => Promise<string>
   onData: (callback: (payload: { id: string; data: string }) => void) => () => void
+  onExit: (callback: (payload: { id: string }) => void) => () => void
 }
 
 export interface AppAPI {

@@ -34,7 +34,7 @@ export class PtyManager {
     return '/bin/sh'
   }
 
-  create(id: string, onData: (data: string) => void, cwd?: string, restartCount = 0): void {
+  create(id: string, onData: (data: string) => void, cwd?: string, restartCount = 0, onExit?: () => void): void {
     this.kill(id)
 
     const shell = this.findShell()
@@ -71,8 +71,10 @@ export class PtyManager {
 
         if (wasQuickExit && instance && instance.restartCount < MAX_RESTART_ATTEMPTS) {
           setTimeout(() => {
-            this.create(id, instance.onDataCallback, instance.initialCwd, instance.restartCount + 1)
+            this.create(id, instance.onDataCallback, instance.initialCwd, instance.restartCount + 1, onExit)
           }, RESTART_DELAY_MS)
+        } else {
+          onExit?.()
         }
       })
 
@@ -102,13 +104,41 @@ export class PtyManager {
   kill(id: string): void {
     const instance = this.instances.get(id)
     if (instance) {
-      instance.process.kill()
       this.instances.delete(id)
+      this.gracefulKill(instance.process)
     }
   }
 
   killAll(): void {
-    for (const [id] of this.instances) this.kill(id)
+    for (const [id, instance] of this.instances) {
+      this.instances.delete(id)
+      this.gracefulKill(instance.process)
+    }
+  }
+
+  /**
+   * Gracefully kill PTY: send 'exit\n' first to let shell cleanup jobs,
+   * then force kill after timeout if still alive.
+   */
+  private gracefulKill(proc: pty.IPty): void {
+    try {
+      // Send exit command so shell can gracefully terminate background jobs
+      proc.write('exit\n')
+    } catch {
+      // PTY already dead, ignore
+    }
+
+    // Force kill after 500ms if shell hasn't exited
+    const forceKillTimer = setTimeout(() => {
+      try {
+        proc.kill()
+      } catch {
+        // Already dead
+      }
+    }, 500)
+
+    // If shell exits on its own, clear the force kill timer
+    proc.onExit(() => clearTimeout(forceKillTimer))
   }
 
   async getCwd(id: string): Promise<string> {
