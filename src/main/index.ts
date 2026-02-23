@@ -2,7 +2,7 @@
  * VibeTerminal - Main Process
  * Electron app entry point
  */
-import { app, BrowserWindow, ipcMain, nativeTheme } from 'electron'
+import { app, BrowserWindow, ipcMain, nativeTheme, shell } from 'electron'
 import { join } from 'path'
 import { PtyManager } from './pty-manager'
 
@@ -56,6 +56,10 @@ ipcMain.handle('terminal:kill', (_, id: string) => {
 
 ipcMain.handle('terminal:getCwd', async (_, id: string) => {
   return ptyManager.getCwd(id)
+})
+
+ipcMain.handle('app:openExternal', (_, url: string) => {
+  shell.openExternal(url)
 })
 
 ipcMain.handle('app:getTheme', () => {

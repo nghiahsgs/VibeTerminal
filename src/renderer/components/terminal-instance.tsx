@@ -45,7 +45,9 @@ export function TerminalInstance({ id, isActive, cwd, onImagePaste }: Props) {
 
     const fitAddon = new FitAddon()
     terminal.loadAddon(fitAddon)
-    terminal.loadAddon(new WebLinksAddon())
+    terminal.loadAddon(new WebLinksAddon((_event, uri) => {
+      window.app.openExternal(uri)
+    }))
 
     terminalRef.current = terminal
     fitAddonRef.current = fitAddon

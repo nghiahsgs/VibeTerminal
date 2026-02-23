@@ -17,5 +17,6 @@ contextBridge.exposeInMainWorld('terminal', {
 })
 
 contextBridge.exposeInMainWorld('app', {
-  getTheme: () => ipcRenderer.invoke('app:getTheme')
+  getTheme: () => ipcRenderer.invoke('app:getTheme'),
+  openExternal: (url: string) => ipcRenderer.invoke('app:openExternal', url)
 })
