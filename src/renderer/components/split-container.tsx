@@ -112,6 +112,21 @@ export function SplitContainer({ onImagePaste }: Props) {
         e.preventDefault()
         setSplitDirection(d => d === 'horizontal' ? 'vertical' : 'horizontal')
       }
+      // Cmd+1-9: switch to tab by index in active pane
+      const num = parseInt(e.key)
+      if (isMeta && num >= 1 && num <= 9) {
+        e.preventDefault()
+        const pane = panes.find(p => p.id === activePaneId)
+        if (pane) {
+          const tabIndex = num - 1
+          const tab = pane.tabs[tabIndex]
+          if (tab) {
+            setPanes(prev => prev.map(p =>
+              p.id === pane.id ? { ...p, activeTabId: tab.id } : p
+            ))
+          }
+        }
+      }
     }
 
     window.addEventListener('keydown', handler)

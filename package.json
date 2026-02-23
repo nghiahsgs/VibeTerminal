@@ -39,8 +39,16 @@
   "build": {
     "appId": "com.vibeflow.terminal",
     "productName": "VibeTerminal",
+    "icon": "resources/icon.icns",
     "mac": {
+      "icon": "resources/icon.icns",
       "category": "public.app-category.developer-tools"
+    },
+    "win": {
+      "icon": "resources/icon.ico"
+    },
+    "linux": {
+      "icon": "resources/icon.png"
     }
   }
 }
