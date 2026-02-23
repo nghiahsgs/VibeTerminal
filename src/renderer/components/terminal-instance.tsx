@@ -21,13 +21,14 @@ export function TerminalInstance({ id, isActive, cwd, onImagePaste }: Props) {
   const terminalRef = useRef<Terminal | null>(null)
   const fitAddonRef = useRef<FitAddon | null>(null)
   const initializedRef = useRef(false)
-  const cleanupRef = useRef<(() => void) | null>(null)
   const { xtermTheme } = useTheme()
 
   // Initialize terminal once
   useEffect(() => {
     if (initializedRef.current || !containerRef.current) return
     initializedRef.current = true
+
+    const container = containerRef.current
 
     const terminal = new Terminal({
       cursorBlink: true,
@@ -49,7 +50,7 @@ export function TerminalInstance({ id, isActive, cwd, onImagePaste }: Props) {
     terminalRef.current = terminal
     fitAddonRef.current = fitAddon
 
-    terminal.open(containerRef.current)
+    terminal.open(container)
 
     // Create PTY
     window.terminal.create(id, cwd)
@@ -70,17 +71,16 @@ export function TerminalInstance({ id, isActive, cwd, onImagePaste }: Props) {
       const { cols, rows } = terminal
       window.terminal.resize(id, cols, rows)
       if (isActive) terminal.focus()
-    }, 100)
+    }, 150)
 
-    cleanupRef.current = () => {
+    return () => {
+      initializedRef.current = false
       removeDataListener()
       inputDisposable.dispose()
       window.terminal.kill(id)
       terminal.dispose()
-    }
-
-    return () => {
-      cleanupRef.current?.()
+      terminalRef.current = null
+      fitAddonRef.current = null
     }
   }, [id, cwd])
 
