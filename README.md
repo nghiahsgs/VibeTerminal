@@ -59,14 +59,45 @@ npm run dev       # Start development
 | `Cmd+D` | Split pane |
 | `Cmd+Shift+D` | Toggle split direction (horizontal/vertical) |
 
-## Build
+## Download & Install
+
+### macOS (Apple Silicon)
+
+1. Download `VibeTerminal-x.x.x-arm64.dmg` from [Releases](https://github.com/nghiahsgs/VibeTerminal/releases)
+2. Open the DMG and drag **VibeTerminal** into **Applications**
+3. Open VibeTerminal from Applications — it's signed and notarized by Apple, so it should open without any warnings
+
+> If macOS still shows a security warning, run:
+> ```bash
+> xattr -cr /Applications/VibeTerminal.app
+> ```
+
+## Build from Source
 
 ```bash
+npm install
+npm run rebuild    # Build native module (node-pty)
 npm run build      # Production build
-npm run dist       # Package for macOS
+npm run dist       # Package for macOS (.dmg)
 npm run dist:win   # Package for Windows
 npm run dist:linux # Package for Linux
 ```
+
+### Build with Notarization (macOS)
+
+To build a notarized DMG that opens without Gatekeeper warnings:
+
+```bash
+APPLE_ID=your@email.com \
+APPLE_APP_SPECIFIC_PASSWORD=xxxx-xxxx-xxxx-xxxx \
+APPLE_TEAM_ID=YOUR_TEAM_ID \
+npm run dist
+```
+
+**Prerequisites:**
+- Apple Developer account ($99/year)
+- "Developer ID Application" certificate installed in Keychain
+- App-Specific Password from [appleid.apple.com](https://appleid.apple.com) (Sign-In and Security > App-Specific Passwords)
 
 ## Architecture
 

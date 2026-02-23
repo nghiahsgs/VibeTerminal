@@ -25,6 +25,7 @@
     "react-dom": "^18.2.0"
   },
   "devDependencies": {
+    "@electron/notarize": "^2.5.0",
     "@electron/rebuild": "^3.6.0",
     "@types/node": "^20.10.0",
     "@types/react": "^18.2.0",
@@ -42,7 +43,14 @@
     "icon": "resources/icon.icns",
     "mac": {
       "icon": "resources/icon.icns",
-      "category": "public.app-category.developer-tools"
+      "category": "public.app-category.developer-tools",
+      "hardenedRuntime": true,
+      "gatekeeperAssess": false,
+      "entitlements": "build-config/entitlements.mac.plist",
+      "entitlementsInherit": "build-config/entitlements.mac.plist",
+      "notarize": {
+        "teamId": "6A3UDSGHD3"
+      }
     },
     "win": {
       "icon": "resources/icon.ico"
