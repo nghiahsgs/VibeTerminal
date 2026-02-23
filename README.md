@@ -67,10 +67,18 @@ npm run dev       # Start development
 2. Open the DMG and drag **VibeTerminal** into **Applications**
 3. Open VibeTerminal from Applications — it's signed and notarized by Apple, so it should open without any warnings
 
-> If macOS still shows a security warning, run:
+> **If macOS shows "VibeTerminal can't be opened"** (Gatekeeper warning), use one of these methods:
+>
+> **Method 1** — Right-click → Open:
+> Right-click (or Control-click) on VibeTerminal in Applications → click **Open** → click **Open** again in the dialog
+>
+> **Method 2** — Terminal command:
 > ```bash
 > xattr -cr /Applications/VibeTerminal.app
 > ```
+>
+> **Method 3** — System Settings:
+> Go to **System Settings → Privacy & Security** → scroll down → click **Open Anyway** next to the VibeTerminal message
 
 ## Build from Source
 

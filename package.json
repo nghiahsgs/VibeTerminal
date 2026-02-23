@@ -1,6 +1,6 @@
 {
   "name": "vibe-terminal",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "A modern terminal with image paste, split panes, and beautiful themes",
   "main": "./out/main/index.js",
   "scripts": {
