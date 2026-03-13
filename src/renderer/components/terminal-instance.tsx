@@ -2,7 +2,7 @@
  * Single terminal instance - xterm.js with addons
  * Handles image paste, WebGL rendering, web links
  */
-import { useEffect, useRef, useCallback } from 'react'
+import { useEffect, useRef, useCallback, useState } from 'react'
 import { Terminal } from '@xterm/xterm'
 import { FitAddon } from '@xterm/addon-fit'
 import { WebLinksAddon } from '@xterm/addon-web-links'
@@ -22,6 +22,12 @@ export function TerminalInstance({ id, isActive, cwd, onImagePaste }: Props) {
   const fitAddonRef = useRef<FitAddon | null>(null)
   const initializedRef = useRef(false)
   const { xtermTheme } = useTheme()
+  const [showScrollDown, setShowScrollDown] = useState(false)
+
+  const scrollToBottom = useCallback(() => {
+    terminalRef.current?.scrollToBottom()
+    terminalRef.current?.focus()
+  }, [])
 
   // Initialize terminal once
   useEffect(() => {
@@ -73,6 +79,19 @@ export function TerminalInstance({ id, isActive, cwd, onImagePaste }: Props) {
       if (exitId === id) ptyAlive = false
     })
 
+    // Track scroll position via DOM scroll event on xterm viewport
+    const viewport = container.querySelector('.xterm-viewport') as HTMLElement | null
+    const handleViewportScroll = () => {
+      const isAtBottom = terminal.buffer.active.viewportY >= terminal.buffer.active.baseY
+      setShowScrollDown(!isAtBottom && terminal.buffer.active.baseY > 0)
+    }
+    viewport?.addEventListener('scroll', handleViewportScroll, { passive: true })
+    // Also check after new content is written
+    const writeDisposable = terminal.onWriteParsed(() => {
+      const isAtBottom = terminal.buffer.active.viewportY >= terminal.buffer.active.baseY
+      setShowScrollDown(!isAtBottom && terminal.buffer.active.baseY > 0)
+    })
+
     // Fit and resize
     setTimeout(() => {
       fitAddon.fit()
@@ -85,6 +104,8 @@ export function TerminalInstance({ id, isActive, cwd, onImagePaste }: Props) {
       initializedRef.current = false
       removeDataListener()
       inputDisposable.dispose()
+      viewport?.removeEventListener('scroll', handleViewportScroll)
+      writeDisposable.dispose()
       window.terminal.kill(id)
       terminal.dispose()
       terminalRef.current = null
@@ -174,14 +195,25 @@ export function TerminalInstance({ id, isActive, cwd, onImagePaste }: Props) {
   }, [onImagePaste])
 
   return (
-    <div
-      ref={containerRef}
-      className="terminal-instance"
-      style={{ display: isActive ? 'block' : 'none', height: '100%' }}
-      onClick={() => terminalRef.current?.focus()}
-      onPaste={handlePaste}
-      onDrop={handleDrop}
-      onDragOver={(e) => e.preventDefault()}
-    />
+    <div style={{ display: isActive ? 'block' : 'none', height: '100%', position: 'relative' }}>
+      <div
+        ref={containerRef}
+        className="terminal-instance"
+        style={{ height: '100%' }}
+        onClick={() => terminalRef.current?.focus()}
+        onPaste={handlePaste}
+        onDrop={handleDrop}
+        onDragOver={(e) => e.preventDefault()}
+      />
+      {showScrollDown && (
+        <button
+          className="scroll-to-bottom-btn"
+          onClick={scrollToBottom}
+          title="Scroll to bottom"
+        >
+          ↓
+        </button>
+      )}
+    </div>
   )
 }

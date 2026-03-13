@@ -282,6 +282,33 @@ html, body, #root {
   background: var(--hover);
 }
 
+/* Scroll to bottom button */
+.scroll-to-bottom-btn {
+  position: absolute;
+  bottom: 12px;
+  right: 16px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--tab-bg, #1e1e1e);
+  border: 1px solid var(--border, #333);
+  color: inherit;
+  font-size: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.6;
+  transition: opacity 0.2s, background 0.2s;
+  z-index: 10;
+}
+
+.scroll-to-bottom-btn:hover {
+  opacity: 1;
+  background: var(--accent, #7aa2f7);
+  color: #fff;
+}
+
 /* Image overlay */
 .image-overlay {
   position: fixed;
