@@ -119,7 +119,12 @@ export class PtyManager {
   killAll(): void {
     for (const [id, instance] of this.instances) {
       this.instances.delete(id)
-      this.gracefulKill(instance.process)
+      // Force kill immediately to prevent callbacks firing after window destroyed
+      try {
+        instance.process.kill()
+      } catch {
+        // Already dead
+      }
     }
   }
 
