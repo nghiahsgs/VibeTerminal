@@ -29,6 +29,12 @@ export function SplitContainer({ onImagePaste }: Props) {
   const [panes, setPanes] = useState<SplitPane[]>([])
   const [activePaneId, setActivePaneId] = useState<string | null>(null)
   const [splitDirection, setSplitDirection] = useState<'horizontal' | 'vertical'>('horizontal')
+  const [shellName, setShellName] = useState('shell')
+
+  // Detect shell name from OS
+  useEffect(() => {
+    window.terminal.getShellName().then((name: string) => setShellName(name))
+  }, [])
 
   // Initialize first pane
   useEffect(() => {
@@ -37,11 +43,11 @@ export function SplitContainer({ onImagePaste }: Props) {
     const paneId = 'pane-1'
     setPanes([{
       id: paneId,
-      tabs: [{ id: termId, name: 'zsh' }],
+      tabs: [{ id: termId, name: shellName }],
       activeTabId: termId
     }])
     setActivePaneId(paneId)
-  }, [])
+  }, [shellName])
 
   // Keep activePaneId in sync when panes are removed
   useEffect(() => {
@@ -57,7 +63,7 @@ export function SplitContainer({ onImagePaste }: Props) {
       if (pane.id !== activePaneId) return pane
       return {
         ...pane,
-        tabs: [...pane.tabs, { id: termId, name: `zsh ${counter}` }],
+        tabs: [...pane.tabs, { id: termId, name: `${shellName} ${counter}` }],
         activeTabId: termId
       }
     }))
@@ -101,11 +107,11 @@ export function SplitContainer({ onImagePaste }: Props) {
     const paneId = `pane-${Date.now()}`
     setPanes(prev => [...prev, {
       id: paneId,
-      tabs: [{ id: termId, name: `zsh ${counter}` }],
+      tabs: [{ id: termId, name: `${shellName} ${counter}` }],
       activeTabId: termId
     }])
     setActivePaneId(paneId)
-  }, [])
+  }, [shellName])
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -187,6 +193,22 @@ export function SplitContainer({ onImagePaste }: Props) {
               }}
               onClose={(tabId) => closeTab(pane.id, tabId)}
               onNew={addTab}
+              onRename={(tabId, newName) => {
+                setPanes(prev => prev.map(p =>
+                  p.id === pane.id
+                    ? { ...p, tabs: p.tabs.map(t => t.id === tabId ? { ...t, name: newName } : t) }
+                    : p
+                ))
+              }}
+              onReorder={(fromIndex, toIndex) => {
+                setPanes(prev => prev.map(p => {
+                  if (p.id !== pane.id) return p
+                  const newTabs = [...p.tabs]
+                  const [moved] = newTabs.splice(fromIndex, 1)
+                  newTabs.splice(toIndex, 0, moved)
+                  return { ...p, tabs: newTabs }
+                }))
+              }}
             />
           </div>
         ))}

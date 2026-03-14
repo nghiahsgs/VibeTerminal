@@ -208,6 +208,31 @@ html, body, #root {
 
 .tab-name {
   user-select: none;
+  cursor: default;
+}
+
+.tab.drag-over {
+  border-left: 2px solid var(--accent);
+}
+
+.tab[draggable="true"] {
+  cursor: grab;
+}
+
+.tab[draggable="true"]:active {
+  cursor: grabbing;
+}
+
+.tab-rename-input {
+  background: var(--bg);
+  color: var(--fg);
+  border: 1px solid var(--accent);
+  border-radius: 3px;
+  font-size: 12px;
+  padding: 1px 4px;
+  outline: none;
+  width: 80px;
+  font-family: inherit;
 }
 
 .tab-close {

@@ -192,6 +192,12 @@ export class PtyManager {
     return null
   }
 
+  getShellName(): string {
+    const shell = this.findShell()
+    // Extract just the name: /bin/zsh -> zsh, powershell.exe -> powershell
+    return shell.split('/').pop()?.replace('.exe', '') || 'shell'
+  }
+
   async getCwd(id: string): Promise<string> {
     const instance = this.instances.get(id)
     if (!instance) return os.homedir()

@@ -9,6 +9,7 @@ contextBridge.exposeInMainWorld('terminal', {
   resize: (id: string, cols: number, rows: number) => ipcRenderer.send('terminal:resize', id, cols, rows),
   kill: (id: string) => ipcRenderer.invoke('terminal:kill', id),
   getCwd: (id: string) => ipcRenderer.invoke('terminal:getCwd', id),
+  getShellName: () => ipcRenderer.invoke('terminal:getShellName'),
   onData: (callback: (payload: { id: string; data: string }) => void) => {
     const handler = (_: Electron.IpcRendererEvent, payload: { id: string; data: string }) => callback(payload)
     ipcRenderer.on('terminal:data', handler)

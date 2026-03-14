@@ -65,6 +65,10 @@ ipcMain.handle('terminal:getCwd', async (_, id: string) => {
   return ptyManager.getCwd(id)
 })
 
+ipcMain.handle('terminal:getShellName', () => {
+  return ptyManager.getShellName()
+})
+
 ipcMain.handle('app:openExternal', (_, url: string) => {
   shell.openExternal(url)
 })
