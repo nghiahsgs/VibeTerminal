@@ -43,6 +43,13 @@ export function SplitContainer({ onImagePaste }: Props) {
     setActivePaneId(paneId)
   }, [])
 
+  // Keep activePaneId in sync when panes are removed
+  useEffect(() => {
+    if (panes.length > 0 && !panes.find(p => p.id === activePaneId)) {
+      setActivePaneId(panes[panes.length - 1].id)
+    }
+  }, [panes, activePaneId])
+
   // Add tab to active pane
   const addTab = useCallback(async () => {
     const termId = nextId()
@@ -56,21 +63,35 @@ export function SplitContainer({ onImagePaste }: Props) {
     }))
   }, [activePaneId])
 
-  // Close tab
+  // Close tab (removes pane when last tab is closed, unless it's the only pane)
   const closeTab = useCallback((paneId: string, tabId: string) => {
     setPanes(prev => {
-      return prev.map(pane => {
+      const updated = prev.map(pane => {
         if (pane.id !== paneId) return pane
         const filtered = pane.tabs.filter(t => t.id !== tabId)
-        if (filtered.length === 0) return pane // Keep at least one tab
+        // Keep pane with empty tabs temporarily — filtered below
         return {
           ...pane,
           tabs: filtered,
-          activeTabId: tabId === pane.activeTabId
-            ? filtered[filtered.length - 1].id
-            : pane.activeTabId
+          activeTabId: filtered.length > 0
+            ? (tabId === pane.activeTabId ? filtered[filtered.length - 1].id : pane.activeTabId)
+            : null
         }
-      }).filter(pane => pane.tabs.length > 0)
+      })
+
+      // Remove empty panes, but always keep at least one pane
+      const nonEmpty = updated.filter(pane => pane.tabs.length > 0)
+      if (nonEmpty.length === 0) {
+        // Last pane's last tab — keep the pane with one tab
+        return prev
+      }
+      return nonEmpty
+    })
+
+    // Update active pane if current was removed
+    setActivePaneId(prev => {
+      // Will be validated in next render
+      return prev
     })
   }, [])
 
@@ -148,7 +169,7 @@ export function SplitContainer({ onImagePaste }: Props) {
                 <TerminalInstance
                   key={tab.id}
                   id={tab.id}
-                  isActive={tab.id === pane.activeTabId && pane.id === activePaneId}
+                  isActive={tab.id === pane.activeTabId}
                   cwd={tab.cwd}
                   onImagePaste={onImagePaste}
                 />
